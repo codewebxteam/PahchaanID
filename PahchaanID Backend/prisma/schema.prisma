@@ -1,0 +1,217 @@
+generator client {
+  provider = "prisma-client"
+  output   = "../src/generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+enum HotelStatus {
+  PENDING_PLAN
+  ACTIVE
+  SUSPENDED
+}
+
+enum VerificationType {
+  COUPLE
+  FAMILY
+  STUDENT
+  PROFESSIONAL
+}
+
+enum GovIdType {
+  AADHAAR
+  PAN
+  VOTER_ID
+  PASSPORT
+  DRIVING_LICENSE
+}
+
+enum PaymentStatus {
+  PENDING
+  SUCCESS
+  FAILED
+  REFUNDED
+}
+
+model Owner {
+  id            String   @id @default(uuid())
+  name          String   @db.VarChar(100)
+  phone         String   @unique @db.VarChar(13)
+  email         String?  @db.VarChar(100)
+  phoneVerified Boolean  @default(false)
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  hotels Hotel[]
+
+  @@index([phone])
+}
+
+model Manager {
+  id            String   @id @default(uuid())
+  name          String   @db.VarChar(100)
+  phone         String   @unique @db.VarChar(13)
+  phoneVerified Boolean  @default(false)
+  hotelId       String?
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  hotel         Hotel?         @relation(fields: [hotelId], references: [id])
+  verifications Verification[]
+
+  @@index([phone])
+  @@index([hotelId])
+}
+
+model Admin {
+  id            String   @id @default(uuid())
+  name          String   @db.VarChar(100)
+  phone         String   @unique @db.VarChar(13)
+  phoneVerified Boolean  @default(false)
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  districts AdminDistrict[]
+
+  @@index([phone])
+}
+
+model SuperAdmin {
+  id            String   @id @default(uuid())
+  name          String   @db.VarChar(100)
+  phone         String   @unique @db.VarChar(13)
+  phoneVerified Boolean  @default(false)
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  @@index([phone])
+}
+
+model Otp {
+  id        String   @id @default(uuid())
+  phone     String?  @db.VarChar(13)
+  email     String?  @db.VarChar(100)
+  code      String   @db.VarChar(6)
+  channel   String   @default("sms")
+  expiresAt DateTime
+  verified  Boolean  @default(false)
+  createdAt DateTime @default(now())
+
+  @@index([phone, verified])
+}
+
+model Hotel {
+  id         String      @id @default(uuid())
+  ownerId    String
+  name       String      @db.VarChar(100)
+  address    String      @db.VarChar(255)
+  city       String?     @db.VarChar(50)
+  state      String?     @db.VarChar(50)
+  pincode    String?     @db.VarChar(6)
+  districtId String?
+  latitude   Decimal     @db.Decimal(9, 6)
+  longitude  Decimal     @db.Decimal(9, 6)
+  status     HotelStatus @default(PENDING_PLAN)
+  createdAt  DateTime    @default(now())
+  updatedAt  DateTime    @updatedAt
+
+  owner         Owner          @relation(fields: [ownerId], references: [id])
+  managers      Manager[]
+  district      District?      @relation(fields: [districtId], references: [id])
+  subscriptions Subscription[]
+  verifications Verification[]
+
+  @@index([ownerId])
+  @@index([districtId])
+}
+
+model District {
+  id        String   @id @default(uuid())
+  name      String   @db.VarChar(100)
+  state     String   @db.VarChar(50)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  hotels Hotel[]
+  admins AdminDistrict[]
+
+  @@unique([name, state])
+}
+
+model AdminDistrict {
+  id         String   @id @default(uuid())
+  adminId    String
+  districtId String
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  admin    Admin    @relation(fields: [adminId], references: [id])
+  district District @relation(fields: [districtId], references: [id])
+
+  @@unique([adminId, districtId])
+}
+
+model Subscription {
+  id        String   @id @default(uuid())
+  hotelId   String
+  startDate DateTime
+  endDate   DateTime
+  isActive  Boolean  @default(false)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  hotel    Hotel     @relation(fields: [hotelId], references: [id])
+  payments Payment[]
+
+  @@index([hotelId, isActive])
+}
+
+model Payment {
+  id             String        @id @default(uuid())
+  subscriptionId String
+  amount         Decimal       @db.Decimal(10, 2)
+  currency       String        @default("INR") @db.VarChar(3)
+  status         PaymentStatus @default(PENDING)
+  gatewayTxnId   String?       @unique @db.VarChar(100)
+  paidAt         DateTime?
+  createdAt      DateTime      @default(now())
+
+  subscription Subscription @relation(fields: [subscriptionId], references: [id])
+}
+
+model Verification {
+  id        String           @id @default(uuid())
+  hotelId   String
+  managerId String
+  type      VerificationType
+  adults    Int              @default(1)
+  children  Int              @default(0)
+  purpose   String?          @db.VarChar(255)
+  createdAt DateTime         @default(now())
+
+  hotel   Hotel                @relation(fields: [hotelId], references: [id])
+  manager Manager              @relation(fields: [managerId], references: [id])
+  persons VerificationPerson[]
+
+  @@index([hotelId])
+  @@index([managerId])
+  @@index([hotelId, createdAt])
+}
+
+model VerificationPerson {
+  id             String    @id @default(uuid())
+  verificationId String
+  name           String    @db.VarChar(100)
+  idType         GovIdType
+  idNumber       String    @db.VarChar(30)
+  verified       Boolean   @default(false)
+  response       Json?
+  createdAt      DateTime  @default(now())
+
+  verification Verification @relation(fields: [verificationId], references: [id])
+
+  @@index([verificationId])
+  @@index([idNumber])
+}
