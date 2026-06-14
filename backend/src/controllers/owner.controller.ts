@@ -180,7 +180,7 @@ export async function addHotel(req: Request, res: Response) {
 export async function subscribe(req: Request, res: Response) {
   try {
     const { entityId } = req.user!;
-    const hotelId = req.params.hotelId!;
+    const hotelId = req.params.hotelId as string;
 
     const hotel = await db.hotel.findUnique({ where: { id: hotelId } });
     if (!hotel || hotel.ownerId !== entityId) {
@@ -234,7 +234,7 @@ export async function subscribe(req: Request, res: Response) {
 export async function addManager(req: Request, res: Response) {
   try {
     const { entityId } = req.user!;
-    const hotelId = req.params.hotelId!;
+    const hotelId = req.params.hotelId as string;
     const { name, phone } = req.body;
 
     if (!name || !phone) {
@@ -275,8 +275,8 @@ export async function addManager(req: Request, res: Response) {
 export async function removeManager(req: Request, res: Response) {
   try {
     const { entityId } = req.user!;
-    const hotelId = req.params.hotelId!;
-    const managerId = req.params.managerId!;
+    const hotelId = req.params.hotelId as string;
+    const managerId = req.params.managerId as string;
 
     const hotel = await db.hotel.findUnique({ where: { id: hotelId } });
     if (!hotel || hotel.ownerId !== entityId) {
@@ -305,7 +305,7 @@ export async function removeManager(req: Request, res: Response) {
 export async function getHotelVerifications(req: Request, res: Response) {
   try {
     const { entityId } = req.user!;
-    const hotelId = req.params.hotelId!;
+    const hotelId = req.params.hotelId as string;
 
     const hotel = await db.hotel.findUnique({ where: { id: hotelId } });
     if (!hotel || hotel.ownerId !== entityId) {

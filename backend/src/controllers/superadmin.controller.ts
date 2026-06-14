@@ -158,7 +158,7 @@ export async function getHotels(req: Request, res: Response) {
 
 export async function getHotelDetail(req: Request, res: Response) {
   try {
-    const hotelId = req.params.hotelId!;
+    const hotelId = req.params.hotelId as string;
 
     const hotel = await db.hotel.findUnique({
       where: { id: hotelId },
@@ -290,7 +290,7 @@ export async function getAdmins(req: Request, res: Response) {
 
 export async function assignDistricts(req: Request, res: Response) {
   try {
-    const adminId = req.params.adminId!;
+    const adminId = req.params.adminId as string;
     const { districtIds } = req.body;
 
     if (!districtIds || !Array.isArray(districtIds) || districtIds.length === 0) {
@@ -343,8 +343,8 @@ export async function assignDistricts(req: Request, res: Response) {
 
 export async function removeDistrict(req: Request, res: Response) {
   try {
-    const adminId = req.params.adminId!;
-    const districtId = req.params.districtId!;
+    const adminId = req.params.adminId as string;
+    const districtId = req.params.districtId as string;
 
     const assignment = await db.adminDistrict.findUnique({
       where: { adminId_districtId: { adminId, districtId } },
@@ -398,7 +398,7 @@ export async function createDistrict(req: Request, res: Response) {
 
 export async function updateDistrict(req: Request, res: Response) {
   try {
-    const districtId = req.params.districtId!;
+    const districtId = req.params.districtId as string;
     const { name, state } = req.body;
 
     const district = await db.district.findUnique({ where: { id: districtId } });
@@ -424,7 +424,7 @@ export async function updateDistrict(req: Request, res: Response) {
 
 export async function deleteDistrict(req: Request, res: Response) {
   try {
-    const districtId = req.params.districtId!;
+    const districtId = req.params.districtId as string;
 
     const district = await db.district.findUnique({ where: { id: districtId } });
     if (!district) {

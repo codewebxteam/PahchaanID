@@ -175,7 +175,7 @@ export async function getHotels(req: Request, res: Response) {
 export async function getHotelDetail(req: Request, res: Response) {
   try {
     const { entityId } = req.user!;
-    const hotelId = req.params.hotelId!;
+    const hotelId = req.params.hotelId as string;
     const districtIds = await getAdminDistrictIds(entityId);
 
     const hotel = await db.hotel.findUnique({

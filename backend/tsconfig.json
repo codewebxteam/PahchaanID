@@ -38,7 +38,6 @@
     "noUncheckedSideEffectImports": true,
     "moduleDetection": "force",
     "skipLibCheck": true,
-    "baseUrl": ".",
     "paths": {
       "@/*": [
         "./src/*"
@@ -48,5 +47,8 @@
   "exclude": [
     "prisma.config.ts",
     "node_modules"
+  ],
+  "include": [
+    "src/**/*"
   ]
 }
