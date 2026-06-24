@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, ScrollView, TouchableOpacity, TextInput, Alert, BackHandler, ActivityIndicator } from 'react-native';
+import { View, Text, ScrollView, TouchableOpacity, TextInput, Alert, BackHandler, ActivityIndicator, Image } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { Colors } from '../../constants/colors';
 import { MOCK_PROFILES } from '../../constants/mockData';
@@ -172,41 +172,72 @@ const VerificationTab = () => {
             const mockIndex = (idStr ? parseInt(idStr.slice(-1)) : idx) % MOCK_PROFILES.length;
             const mock = MOCK_PROFILES[mockIndex];
             
-            const displayName = needsMock ? mock.name : name;
-            const displayAge = needsMock ? mock.age : (person?.age || 26);
-            const displayAddress = needsMock ? mock.address : (person?.address || 'Address not provided');
+            const responseData = person?.response || {};
+            const displayName = responseData.name || (needsMock ? mock.name : name);
+            const displayAge = responseData.age || mock.age;
+            const displayGender = responseData.gender || 'Unknown';
+            const displayFatherName = responseData.fatherName || 'Unknown';
+            const displayAddress = responseData.address || mock.address;
+            const photoUrl = responseData.photoUrl;
+            
+            const isMinor = displayAge < 18;
 
             return (
-              <View key={idx} style={tabStyles.detailCard}>
+              <View key={idx} style={[tabStyles.detailCard, isMinor && { borderColor: '#EF4444', borderWidth: 2, backgroundColor: '#FEF2F2' }]}>
+                {isMinor && (
+                  <View style={{ backgroundColor: '#EF4444', paddingVertical: 4, paddingHorizontal: 12, borderTopLeftRadius: 14, borderTopRightRadius: 14, flexDirection: 'row', alignItems: 'center', justifyContent: 'center' }}>
+                    <Ionicons name="warning" size={14} color="#FFF" style={{ marginRight: 6 }} />
+                    <Text style={{ color: '#FFF', fontSize: 11, fontWeight: 'bold', letterSpacing: 1 }}>RED ZONE - MINOR DETECTED (UNDER 18)</Text>
+                  </View>
+                )}
                 {/* Header: Name + Badge */}
-                <View style={tabStyles.passHeader}>
+                <View style={[tabStyles.passHeader, isMinor && { paddingTop: 12 }]}>
                   <Text style={tabStyles.passName} numberOfLines={1}>{displayName}</Text>
-                  <View style={tabStyles.verifiedBadge}>
-                    <Ionicons name="shield-checkmark-outline" size={10} color="#059669" />
-                    <Text style={tabStyles.verifiedBadgeText}>VERIFIED</Text>
+                  <View style={[tabStyles.verifiedBadge, isMinor && { backgroundColor: '#FEE2E2', borderColor: '#FCA5A5' }]}>
+                    <Ionicons name={isMinor ? "alert-circle" : "shield-checkmark-outline"} size={10} color={isMinor ? "#EF4444" : "#059669"} />
+                    <Text style={[tabStyles.verifiedBadgeText, isMinor && { color: '#EF4444' }]}>{isMinor ? "MINOR" : "VERIFIED"}</Text>
                   </View>
                 </View>
 
-                {/* Body: ID + Age */}
+                {/* Body: ID + Age + Photo */}
                 <View style={tabStyles.passBody}>
-                  <View style={tabStyles.passDetailsRow}>
-                    <View style={tabStyles.passItem}>
-                      <Text style={tabStyles.passLabel}>{person?.idType} Number</Text>
-                      <Text style={tabStyles.passValue}>{person?.idNumber}</Text>
-                    </View>
-                    <View style={{ width: 1, backgroundColor: '#F3F4FB' }} />
-                    <View style={{ width: 40 }}>
-                      <Text style={tabStyles.passLabel}>Age</Text>
-                      <Text style={tabStyles.passValue}>{displayAge}</Text>
+                  <View style={{ flexDirection: 'row', alignItems: 'flex-start' }}>
+                    {photoUrl && (
+                      <View style={{ marginRight: 16, backgroundColor: '#F3F4FB', borderRadius: 8, overflow: 'hidden', borderWidth: 1, borderColor: '#E5E7EB' }}>
+                        <Image source={{ uri: photoUrl }} style={{ width: 60, height: 60 }} />
+                      </View>
+                    )}
+                    <View style={{ flex: 1 }}>
+                      <View style={[tabStyles.passDetailsRow, { marginBottom: 12 }]}>
+                        <View style={tabStyles.passItem}>
+                          <Text style={tabStyles.passLabel}>{person?.idType} Number</Text>
+                          <Text style={tabStyles.passValue}>{person?.idNumber}</Text>
+                        </View>
+                        <View style={{ width: 1, backgroundColor: isMinor ? '#FCA5A5' : '#F3F4FB' }} />
+                        <View style={{ width: 40 }}>
+                          <Text style={tabStyles.passLabel}>Age</Text>
+                          <Text style={[tabStyles.passValue, isMinor && { color: '#EF4444', fontWeight: 'bold' }]}>{displayAge}</Text>
+                        </View>
+                        <View style={{ width: 1, backgroundColor: isMinor ? '#FCA5A5' : '#F3F4FB' }} />
+                        <View style={{ width: 50 }}>
+                          <Text style={tabStyles.passLabel}>Gender</Text>
+                          <Text style={tabStyles.passValue}>{displayGender}</Text>
+                        </View>
+                      </View>
+                      
+                      <View style={tabStyles.passItem}>
+                        <Text style={tabStyles.passLabel}>Father's Name</Text>
+                        <Text style={tabStyles.passValue}>{displayFatherName}</Text>
+                      </View>
                     </View>
                   </View>
                 </View>
 
                 {/* Footer: Address */}
-                <View style={tabStyles.passFooterAddress}>
+                <View style={[tabStyles.passFooterAddress, isMinor && { borderTopColor: '#FCA5A5', backgroundColor: '#FEF2F2' }]}>
                   <View style={tabStyles.addressBox}>
-                    <Ionicons name="location-outline" size={16} color="#9CA3AF" />
-                    <Text style={tabStyles.addressText} numberOfLines={2}>{displayAddress}</Text>
+                    <Ionicons name="location-outline" size={16} color={isMinor ? "#EF4444" : "#9CA3AF"} />
+                    <Text style={[tabStyles.addressText, isMinor && { color: '#991B1B' }]} numberOfLines={2}>{displayAddress}</Text>
                   </View>
                 </View>
               </View>

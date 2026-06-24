@@ -35,7 +35,7 @@ export default function TopBar({ title }: { title?: string }) {
   });
 
   return (
-    <header className="sticky top-0 z-30 flex h-16 items-center justify-between border-b border-slate-200 bg-white px-6 lg:px-8 shadow-sm">
+    <header className="sticky top-0 z-30 flex h-16 items-center justify-between border-b border-slate-200 bg-white pl-16 pr-4 lg:px-8 shadow-sm">
       <div className="flex flex-col">
         <div className="flex items-center gap-1.5 text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-0.5">
           <Home className="h-2.5 w-2.5" />

@@ -175,20 +175,40 @@ export async function createVerification(req: Request, res: Response) {
       return;
     }
 
-    // TODO: call third-party ID verification API for each person
-    // For now, mock the response with placeholder data
-    const verifiedPersons = persons.map((p: { idType: GovIdType; idNumber: string; name?: string }) => ({
-      name: p.name || "Unknown",
-      idType: p.idType as GovIdType,
-      idNumber: p.idNumber,
-      verified: true,
-      response: {
-        source: "mock",
-        message: "Third-party verification not yet integrated",
-        idType: p.idType,
-        idNumber: p.idNumber,
-      },
-    }));
+    // Look up each person's ID from the GovIdRecord table in database
+    const verifiedPersons = await Promise.all(
+      persons.map(async (p: { idType: GovIdType; idNumber: string; name?: string }) => {
+        const govRecord = await db.govIdRecord.findFirst({
+          where: {
+            idNumber: p.idNumber,
+            idType: p.idType,
+          },
+        });
+
+        if (govRecord) {
+          return {
+            name: govRecord.name,
+            idType: p.idType as GovIdType,
+            idNumber: p.idNumber,
+            verified: true,
+            response: govRecord,
+          };
+        }
+
+        return {
+          name: p.name || "Unknown",
+          idType: p.idType as GovIdType,
+          idNumber: p.idNumber,
+          verified: true,
+          response: {
+            source: "mock",
+            message: "ID not found in database",
+            idType: p.idType,
+            idNumber: p.idNumber,
+          },
+        };
+      })
+    );
 
     const verification = await db.verification.create({
       data: {

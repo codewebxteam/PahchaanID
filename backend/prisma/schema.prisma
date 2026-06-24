@@ -215,3 +215,35 @@ model VerificationPerson {
   @@index([verificationId])
   @@index([idNumber])
 }
+
+model GovIdRecord {
+  id               String    @id @default(uuid())
+  idNumber         String    @db.VarChar(50)
+  idType           GovIdType
+  name             String    @db.VarChar(100)
+  fatherName       String    @db.VarChar(100)
+  dob              String    @db.VarChar(20)
+  age              Int
+  gender           String    @db.VarChar(10)
+  address          String    @db.VarChar(500)
+  district         String?   @db.VarChar(50)
+  state            String?   @db.VarChar(50)
+  pincode          String?   @db.VarChar(10)
+  photoUrl         String?   @db.VarChar(255)
+  bloodGroup       String?   @db.VarChar(5)
+  vehicleClass     String?   @db.VarChar(50)
+  dateOfIssue      String?   @db.VarChar(20)
+  dateOfValidity   String?   @db.VarChar(20)
+  dateOfExpiry     String?   @db.VarChar(20)
+  issuingAuthority String?   @db.VarChar(100)
+  nationality      String?   @db.VarChar(30)
+  placeOfBirth     String?   @db.VarChar(50)
+  placeOfIssue     String?   @db.VarChar(50)
+  constituency     String?   @db.VarChar(100)
+  isMinor          Boolean   @default(false)
+  createdAt        DateTime  @default(now())
+
+  @@unique([idNumber, idType])
+  @@index([idNumber])
+  @@index([idType])
+}
