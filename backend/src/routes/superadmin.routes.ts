@@ -11,6 +11,7 @@ import {
   getAdmins,
   assignDistricts,
   removeDistrict,
+  getDistricts,
   createDistrict,
   updateDistrict,
   deleteDistrict,
@@ -43,6 +44,7 @@ router.post("/admin/:adminId/districts", authenticate, authorize("superadmin"), 
 router.delete("/admin/:adminId/districts/:districtId", authenticate, authorize("superadmin"), removeDistrict);
 
 // District CRUD
+router.get("/districts", authenticate, authorize("superadmin"), getDistricts);
 router.post("/districts", authenticate, authorize("superadmin"), createDistrict);
 router.patch("/districts/:districtId", authenticate, authorize("superadmin"), updateDistrict);
 router.delete("/districts/:districtId", authenticate, authorize("superadmin"), deleteDistrict);

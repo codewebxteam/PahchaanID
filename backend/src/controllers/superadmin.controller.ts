@@ -368,6 +368,25 @@ export async function removeDistrict(req: Request, res: Response) {
 
 // ─── District CRUD ───────────────────────────────────────────────────────────
 
+export async function getDistricts(req: Request, res: Response) {
+  try {
+    const districts = await db.district.findMany({
+      include: {
+        admins: {
+          include: {
+            admin: { select: { id: true, name: true, phone: true } },
+          },
+        },
+      },
+      orderBy: [{ state: "asc" }, { name: "asc" }],
+    });
+    res.json({ districts });
+  } catch (err) {
+    console.error("superadmin getDistricts error:", err);
+    res.status(500).json({ error: "Internal server error" });
+  }
+}
+
 export async function createDistrict(req: Request, res: Response) {
   try {
     const { name, state } = req.body;

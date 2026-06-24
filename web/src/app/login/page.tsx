@@ -41,6 +41,7 @@ export default function UnifiedLoginPage() {
         res = await adminLogin(fullPhone);
       }
       setDevOtp(res.otp ?? null);
+      if (res.otp) setOtp(res.otp);
       setStep("otp");
       setTimeout(() => otpInputRef.current?.focus(), 100);
       toast.success("OTP sent successfully");

@@ -40,6 +40,7 @@ export default function AdminsPage() {
   const [showCreate, setShowCreate] = useState(false);
   const [createName, setCreateName] = useState("");
   const [createPhone, setCreatePhone] = useState("");
+  const [createDistrictId, setCreateDistrictId] = useState("");
   const [createLoading, setCreateLoading] = useState(false);
 
   // Assign districts
@@ -60,7 +61,7 @@ export default function AdminsPage() {
     try {
       const [adminsData, districtData] = await Promise.all([
         saGetAdmins(token),
-        saGetDistricts(),
+        saGetDistricts(token),
       ]);
       setAdmins(adminsData.admins);
       setDistricts(districtData.districts);
@@ -86,14 +87,21 @@ export default function AdminsPage() {
     if (!token || !createName.trim() || createPhone.trim().length !== 10) return;
     setCreateLoading(true);
     try {
-      await saCreateAdmin(token, {
+      const res = await saCreateAdmin(token, {
         name: createName.trim(),
         phone: `+91${createPhone.trim()}`,
       });
+      
+      // If a district was selected, assign it immediately
+      if (createDistrictId) {
+         await saAssignDistricts(token, res.admin.id, [createDistrictId]);
+      }
+      
       toast.success("Admin created successfully");
       setShowCreate(false);
       setCreateName("");
       setCreatePhone("");
+      setCreateDistrictId("");
       await load();
     } catch (e: any) {
       toast.error(e.message);
@@ -305,6 +313,23 @@ export default function AdminsPage() {
                   className="flex-1 bg-transparent text-sm text-slate-800 placeholder-slate-400 outline-none"
                 />
               </div>
+            </div>
+            <div>
+              <label className="block text-[10px] font-bold tracking-widest text-slate-400 uppercase mb-1.5">
+                Assign Initial District (Optional)
+              </label>
+              <select
+                value={createDistrictId}
+                onChange={(e) => setCreateDistrictId(e.target.value)}
+                className="w-full rounded-xl border border-slate-200 bg-slate-50 px-4 h-11 text-sm text-slate-800 outline-none focus:border-slate-400 focus:bg-white transition-all appearance-none"
+              >
+                <option value="">Do not assign yet</option>
+                {districts.map((d) => (
+                  <option key={d.id} value={d.id}>
+                    {d.name} ({d.state})
+                  </option>
+                ))}
+              </select>
             </div>
             <div className="flex gap-2 pt-2">
               <button

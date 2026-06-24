@@ -90,30 +90,11 @@ const Field = ({
 const HotelDetailsForm: React.FC<Props> = ({ data, onChange }) => {
   const [showStateList, setShowStateList] = useState(false);
   const [stateSearch, setStateSearch] = useState('');
-  const [showDistrictList, setShowDistrictList] = useState(false);
-  const [districts, setDistricts] = useState<Array<{ id: string; name: string; state: string }>>([]);
+  
+  // District state
+  const [districts, setDistricts] = useState<{ id: string, name: string }[]>([]);
   const [loadingDistricts, setLoadingDistricts] = useState(false);
-
-  // Fetch districts when state changes
-  useEffect(() => {
-    if (!data.state) {
-      setDistricts([]);
-      return;
-    }
-    let cancelled = false;
-    (async () => {
-      setLoadingDistricts(true);
-      try {
-        const res = await getDistricts(data.state);
-        if (!cancelled) setDistricts(res.districts || []);
-      } catch {
-        if (!cancelled) setDistricts([]);
-      } finally {
-        if (!cancelled) setLoadingDistricts(false);
-      }
-    })();
-    return () => { cancelled = true; };
-  }, [data.state]);
+  const [showDistrictList, setShowDistrictList] = useState(false);
 
   const filteredStates = stateSearch
     ? INDIAN_STATES.filter(s => s.includes(stateSearch.toUpperCase()))
@@ -121,16 +102,40 @@ const HotelDetailsForm: React.FC<Props> = ({ data, onChange }) => {
 
   const selectState = (state: string) => {
     onChange('state', state);
-    // Clear district when state changes
-    onChange('districtId', '');
-    onChange('districtName', '');
     setShowStateList(false);
     setStateSearch('');
   };
 
-  const selectDistrict = (d: { id: string; name: string }) => {
-    onChange('districtId', d.id);
-    onChange('districtName', d.name);
+  useEffect(() => {
+    if (!data.state) {
+      setDistricts([]);
+      onChange('districtId', '');
+      onChange('districtName', '');
+      return;
+    }
+
+    setLoadingDistricts(true);
+    getDistricts(data.state)
+      .then((res) => {
+        setDistricts(res.districts || []);
+        // If the selected district is no longer in the list, clear it
+        if (data.districtId && !res.districts?.find((d: any) => d.id === data.districtId)) {
+          onChange('districtId', '');
+          onChange('districtName', '');
+        }
+      })
+      .catch((err) => {
+        console.error('Failed to fetch districts', err);
+        setDistricts([]);
+      })
+      .finally(() => {
+        setLoadingDistricts(false);
+      });
+  }, [data.state]);
+
+  const selectDistrict = (district: { id: string, name: string }) => {
+    onChange('districtId', district.id);
+    onChange('districtName', district.name);
     setShowDistrictList(false);
   };
 
@@ -186,7 +191,7 @@ const HotelDetailsForm: React.FC<Props> = ({ data, onChange }) => {
       <Field
         icon="pin-outline"
         label="Pincode"
-        placeholder="6-digit Pincode (optional)"
+        placeholder="6-digit Pincode"
         value={data.pincode}
         onChange={(v) => onChange('pincode', v.replace(/\D/g, '').slice(0, 6))}
         keyboardType="number-pad"
@@ -231,7 +236,6 @@ const HotelDetailsForm: React.FC<Props> = ({ data, onChange }) => {
                 value={stateSearch}
                 onChangeText={setStateSearch}
                 style={{ flex: 1, marginLeft: 8, fontSize: 14, color: Colors.heading, paddingVertical: 12 }}
-                autoFocus
               />
             </View>
             <ScrollView nestedScrollEnabled style={{ maxHeight: 210 }} keyboardShouldPersistTaps="handled">
@@ -260,46 +264,59 @@ const HotelDetailsForm: React.FC<Props> = ({ data, onChange }) => {
         )}
       </View>
 
-      {/* ── District Selector ── */}
+      {/* ── District Dropdown ── */}
       <View style={{ marginBottom: 16 }}>
         <Text style={{ fontSize: 11, fontWeight: '800', color: Colors.body, letterSpacing: 1.5, marginBottom: 8, textTransform: 'uppercase' }}>
           District
         </Text>
         <TouchableOpacity
-          disabled={!data.state || loadingDistricts}
-          onPress={() => { setShowDistrictList(!showDistrictList); setShowStateList(false); }}
+          onPress={() => {
+            if (data.state && districts.length > 0) setShowDistrictList(!showDistrictList);
+            setShowStateList(false);
+          }}
+          disabled={!data.state || loadingDistricts || districts.length === 0}
           style={{
             minHeight: 52, flexDirection: 'row', alignItems: 'center',
             paddingHorizontal: 16, borderRadius: 14,
-            backgroundColor: data.state ? '#F4F0FF' : '#F3F4F6',
-            borderWidth: 1.5, borderColor: data.state ? '#DDD6FE' : '#E5E7EB',
+            backgroundColor: (!data.state || districts.length === 0) ? '#F3F4F6' : '#F4F0FF',
+            borderWidth: 1.5, borderColor: (!data.state || districts.length === 0) ? '#E5E7EB' : '#DDD6FE',
           }}
         >
-          <Ionicons name="map-outline" size={19} color={data.state ? Colors.mintIcon : '#9CA3AF'} />
-          <Text style={{ flex: 1, marginLeft: 12, fontSize: 15, color: data.districtName ? Colors.heading : '#9CA3AF' }}>
-            {loadingDistricts ? 'Loading districts...' : data.districtName || (data.state ? 'Select District' : 'Select state first')}
-          </Text>
-          {loadingDistricts ? (
-            <ActivityIndicator size="small" color={Colors.mintIcon} />
-          ) : data.state ? (
+          <Ionicons name="map-outline" size={19} color={Colors.mintIcon} />
+          
+          <View style={{ flex: 1, marginLeft: 12 }}>
+            {loadingDistricts ? (
+              <ActivityIndicator size="small" color={Colors.mintIcon} style={{ alignSelf: 'flex-start' }} />
+            ) : (
+              <Text style={{ fontSize: 15, color: data.districtName ? Colors.heading : '#9CA3AF' }}>
+                {!data.state 
+                  ? 'Select State first' 
+                  : districts.length === 0 
+                    ? 'No districts available' 
+                    : data.districtName || 'Select District'}
+              </Text>
+            )}
+          </View>
+
+          {!loadingDistricts && data.state && districts.length > 0 && (
             <Ionicons name={showDistrictList ? 'chevron-up' : 'chevron-down'} size={18} color={Colors.mintIcon} />
-          ) : null}
+          )}
         </TouchableOpacity>
 
-        {showDistrictList && districts.length > 0 && (
+        {showDistrictList && data.state && districts.length > 0 && (
           <View style={{
             marginTop: 8, backgroundColor: '#fff', borderRadius: 14,
             borderWidth: 1.5, borderColor: '#DDD6FE', elevation: 4,
             shadowColor: '#000', shadowOffset: { width: 0, height: 2 },
-            shadowOpacity: 0.1, shadowRadius: 4, maxHeight: 220,
+            shadowOpacity: 0.1, shadowRadius: 4, maxHeight: 260,
           }}>
-            <ScrollView nestedScrollEnabled keyboardShouldPersistTaps="handled">
+            <ScrollView nestedScrollEnabled style={{ maxHeight: 210 }} keyboardShouldPersistTaps="handled">
               {districts.map((d) => (
                 <TouchableOpacity
                   key={d.id}
                   onPress={() => selectDistrict(d)}
                   style={{
-                    paddingVertical: 12, paddingHorizontal: 16,
+                    paddingVertical: 14, paddingHorizontal: 16,
                     borderBottomWidth: 1, borderBottomColor: '#F9FAFB',
                     backgroundColor: data.districtId === d.id ? '#EDE9FE' : '#fff',
                   }}
@@ -310,17 +327,6 @@ const HotelDetailsForm: React.FC<Props> = ({ data, onChange }) => {
                 </TouchableOpacity>
               ))}
             </ScrollView>
-          </View>
-        )}
-
-        {showDistrictList && !loadingDistricts && districts.length === 0 && data.state && (
-          <View style={{
-            marginTop: 8, backgroundColor: '#fff', borderRadius: 14, padding: 16,
-            borderWidth: 1.5, borderColor: '#DDD6FE',
-          }}>
-            <Text style={{ fontSize: 13, color: Colors.body, textAlign: 'center' }}>
-              No districts found for {data.state}
-            </Text>
           </View>
         )}
       </View>

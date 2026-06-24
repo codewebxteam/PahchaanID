@@ -113,7 +113,7 @@ export default function Register() {
       );
       // Backend returns OTP in dev mode
       setOtpHint(regRes.otp || '');
-      setOtp('');
+      setOtp(regRes.otp || '');
       setOtpError('');
       goNext();
     } catch (err: any) {
@@ -192,7 +192,7 @@ export default function Register() {
   // Validation
   const isStep0Valid = !!(personal.fullName && personal.mobile && personal.mobile.length === 10);
   const isStep1Valid = otp.trim().length === 6;
-  const isStep2Valid = !!(hotel.hotelName && hotel.address && hotel.state && hotel.districtId);
+  const isStep2Valid = !!(hotel.hotelName && hotel.address && hotel.state && hotel.city && hotel.pincode && hotel.districtName);
 
   const canProceed =
     step === 0 ? isStep0Valid :

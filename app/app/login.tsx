@@ -54,6 +54,7 @@ export default function LoginScreen() {
       const res = await loginFn(fullPhone);
       // Backend returns OTP in dev mode
       setOtpHint(res.otp || '');
+      setOtp(res.otp || '');
       setStep('otp');
     } catch (err: any) {
       setError(err.message || 'Failed to send OTP');

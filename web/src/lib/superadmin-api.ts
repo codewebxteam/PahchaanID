@@ -236,11 +236,14 @@ export interface DistrictRecord {
   name: string;
   state: string;
   createdAt: string;
+  admins?: { admin: { id: string; name: string; phone: string } }[];
 }
 
-export async function saGetDistricts() {
+export async function saGetDistricts(token?: string) {
   return request<{ districts: DistrictRecord[] }>(
-    `${BASE}/api/v1/districts`
+    `${SUPERADMIN}/districts`,
+    {},
+    token
   );
 }
 

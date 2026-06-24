@@ -56,7 +56,8 @@ export default function DistrictsPage() {
   const load = useCallback(async () => {
     setLoading(true);
     try {
-      const d = await saGetDistricts();
+      if (!token) return;
+      const d = await saGetDistricts(token);
       setDistricts(d.districts);
     } catch (e: any) {
       toast.error(e.message);
@@ -353,9 +354,17 @@ function DistrictCard({
           <p className="text-[10px] text-slate-400 font-semibold mt-0.5 uppercase tracking-wide">
             {district.state}
           </p>
-          <p className="text-[10px] text-slate-300 mt-1">
-            Added {format(new Date(district.createdAt), "dd MMM yyyy")}
-          </p>
+          {district.admins && district.admins.length > 0 ? (
+            <div className="mt-1.5 flex flex-wrap gap-1">
+              {district.admins.map((ad) => (
+                <span key={ad.admin.id} title={ad.admin.phone} className="text-[9px] font-bold bg-emerald-50 text-emerald-600 px-1.5 py-0.5 rounded border border-emerald-100 flex items-center gap-1">
+                  {ad.admin.name}
+                </span>
+              ))}
+            </div>
+          ) : (
+            <p className="text-[10px] text-slate-300 mt-1">No admin assigned</p>
+          )}
         </div>
       </div>
       <div className="mt-3 flex items-center gap-1.5 justify-end opacity-0 group-hover:opacity-100 transition-opacity">
